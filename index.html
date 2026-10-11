@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0, user-scalable=yes">
+  <meta name="author" content="المطور علي الصالح">
+  <meta name="theme-color" content="#0f402c">
+  <title>نظام إدارة الطلاب والدرجات - مدرسة ذات الصواري | المطور علي الصالح</title>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&family=Readex+Pro:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Export Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-cream: #fbf9f4;
+      --border-dark: #203a2f;
+      --theme-main: #0f402c;
+      --theme-light: #1b5b40;
+      --text-dark: #1b2e25;
+      --wa-color: #25d366;
+      --word-color: #185abd;
+      --active-font: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    body.theme-grade-7 {
+      --border-dark: #1b382b;
+      --theme-main: #0f402c;
+      --theme-light: #1e5e43;
+      --text-dark: #142920;
+    }
+
+    body.theme-grade-8 {
+      --border-dark: #4a1512;
+      --theme-main: #7a1612;
+      --theme-light: #9e231e;
+      --text-dark: #330e0c;
+    }
+
+    body.theme-grade-9 {
+      --border-dark: #132a4a;
+      --theme-main: #0f2c59;
+      --theme-light: #184485;
+      --text-dark: #0a1b33;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--active-font);
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #d8e2dc 0%, #cbd8d1 100%);
+      overflow-x: auto;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      gap: 20px;
+    }
+
+    /* النافذة الترحيبية لاختيار الصف */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(12, 26, 20, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .grade-modal-card {
+      background: #ffffff;
+      border-radius: 28px;
+      max-width: 540px;
+      width: 100%;
+      padding: 35px 25px 25px 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      text-align: center;
+      border: 3px solid var(--theme-main);
+      transform: scale(0.92);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .modal-overlay.active .grade-modal-card {
+      transform: scale(1);
+    }
+
+    .grade-modal-card h2 {
+      font-size: 22px;
+      color: var(--theme-main);
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+
+    .grade-modal-card p {
+      font-size: 14.5px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .grade-buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .grade-btn-card {
+      border: none;
+      border-radius: 16px;
+      padding: 20px 8px;
+      cursor: pointer;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .grade-btn-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+
+    .grade-btn-card i { font-size: 28px; }
+    .grade-btn-card span { font-size: 15px; font-weight: bold; }
+
+    .btn-grade-7 { background: linear-gradient(135deg, #0f402c, #1e5e43); }
+    .btn-grade-8 { background: linear-gradient(135deg, #7a1612, #aa2520); }
+    .btn-grade-9 { background: linear-gradient(135deg, #0f2c59, #1b4b8f); }
+
+    .dev-modal-tag {
+      font-size: 13px;
+      font-weight: bold;
+      color: #666;
+      border-top: 1px solid #eee;
+      padding-top: 12px;
+    }
+
+    .dev-modal-tag span {
+      color: var(--theme-main);
+    }
+
+    /* شريط الأدوات العلوي */
+    .master-toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 8px 18px;
+      border-radius: 40px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+      border: 2px solid var(--border-dark);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 980px;
+      width: 100%;
+    }
+
+    .font-selector-box, .search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef4f0;
+      border: 1.5px solid var(--border-dark);
+      border-radius: 20px;
+      padding: 4px 10px;
+    }
+
+    .font-selector-box label, .search-box label {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--theme-main);
+    }
+
+    .font-selector-box select, .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--text-dark);
+    }
+
+    .search-box input { width: 110px; }
+
+    .btn-switch-grade {
+      background: linear-gradient(135deg, var(--theme-main), var(--theme-light));
+      color: #fff;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .dev-top-pill {
+      background: #ffffff;
+      border: 1.5px solid var(--border-dark);
+      color: var(--text-dark);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* الحاوية المتجاوبة مع الجوال */
+    .mobile-scale-wrapper {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: auto;
+      padding: 5px 0 25px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 794px;
+      margin: 0 auto;
+    }
+
+    .page-toolbar {
+      width: 794px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-dark);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+
+    .btn {
+      color: #ffffff;
+      border: 2px solid #082419;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-page-png { background-color: var(--theme-light); border-color: var(--border-dark); }
+    .btn-delete-page { background-color: #8b1d18; border-color: #4a100d; }
+
+    .btn-all-pdf {
+      background-color: #b3261e;
+      border-color: #601410;
+      border-radius: 20px;
+      padding: 7px 18px;
+    }
+
+    .btn-add-page {
+      background: linear-gradient(135deg, var(--theme-main), var(--theme-light));
+      border: 2px solid var(--border-dark);
+      border-radius: 25px;
+      padding: 10px 24px;
+      font-size: 14px;
+    }
+
+    .btn-reset-all {
+      background: linear-gradient(135deg, #c0392b, #962d22);
+      border: 2px solid #641e16;
+      border-radius: 25px;
+      padding: 10px 24px;
+      font-size: 14px;
+    }
+
+    /* الورقة الرئيسية A4 */
+    .page-container {
+      width: 794px;
+      min-width: 794px;
+      min-height: 1120px;
+      background-color: var(--bg-cream);
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+      border: 3px solid var(--border-dark);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .school-title {
+      text-align: center;
+      font-size: 19px;
+      font-weight: 800;
+      color: #8e24aa;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 4px 0 12px 0;
+    }
+
+    .ornament::before, .ornament::after {
+      content: "";
+      height: 2px;
+      background-color: var(--border-dark);
+      flex: 1;
+    }
+
+    .diamond-icon {
+      width: 13px;
+      height: 13px;
+      background-color: var(--border-dark);
+      transform: rotate(45deg);
+      border: 2px solid var(--bg-cream);
+      outline: 2px solid var(--border-dark);
+    }
+
+    .top-header-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .header-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid var(--border-dark);
+      border-radius: 20px;
+      padding: 4px 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    }
+
+    .header-box label {
+      font-weight: bold;
+      font-size: 15px;
+      color: var(--text-dark);
+      margin-left: 6px;
+    }
+
+    .header-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text-dark);
+      text-align: center;
+    }
+
+    /* تقسيم الأعمدة */
+    .tables-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .column-table {
+      border: 1.5px solid var(--border-dark);
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    .col-header {
+      background-color: var(--theme-main);
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 13.5px;
+      text-align: center;
+      padding: 7px 0;
+      border-bottom: 2px solid var(--border-dark);
+    }
+
+    .col-header div:first-child {
+      border-left: 1.5px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .row-item {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      border-bottom: 1px solid #d2ded7;
+      height: 38px;
+      position: relative;
+    }
+
+    .row-item:last-child { border-bottom: none; }
+
+    .row-item input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      height: 100%;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .row-item .idx-box {
+      border-left: 1px solid #d2ded7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+    }
+
+    .row-item .idx-box input {
+      text-align: center;
+      border: 1px solid #c2d1c9;
+      border-radius: 5px;
+      width: 30px;
+      height: 25px;
+      background-color: #ffffff;
+      pointer-events: none;
+    }
+
+    .row-item .name-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .row-item .name-box input {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* تمييز المتسربين بنقطة حمراء في الزاوية */
+    .row-item.dropout-student {
+      background-color: #fff6f6;
+    }
+
+    .row-item.dropout-student::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 7px;
+      height: 7px;
+      background-color: #e53935;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(229, 57, 53, 0.8);
+      pointer-events: none;
+    }
+
+    .row-item:hover { background-color: #f3f8f5; }
+    .row-item input:focus { background-color: #e8f5ec; }
+
+    .row-item.search-match {
+      background-color: #fff3cd !important;
+      outline: 2px solid #ffc107;
+      z-index: 5;
+    }
+
+    .btn-insert-row {
+      display: none;
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--theme-light);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .row-item:focus-within .btn-insert-row { display: flex; }
+
+    .page-footer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 5px;
+    }
+
+    .book-page-number {
+      font-family: 'Times New Roman', serif;
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--theme-main);
+      letter-spacing: 2px;
+    }
+
+    .dev-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, var(--theme-main), var(--theme-light));
+      color: #ffffff;
+      padding: 4px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border-dark);
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    /* الأزرار العائمة */
+    .floating-buttons-wrapper {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 9999;
+    }
+
+    .floating-btn {
+      width: 52px;
+      height: 52px;
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s;
+    }
+
+    .floating-btn:hover { transform: scale(1.08); }
+    .floating-whatsapp { background-color: var(--wa-color); }
+    .floating-word { background-color: var(--word-color); }
+
+    .bottom-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin: 15px 0 40px 0;
+      flex-wrap: wrap;
+    }
+
+    @media print {
+      body { padding: 0; background: none; }
+      .master-toolbar, .page-toolbar, .floating-buttons-wrapper, .bottom-controls, .btn-insert-row, .modal-overlay {
+        display: none !important;
+      }
+      .mobile-scale-wrapper { overflow: visible !important; }
+      .page-wrapper { page-break-after: always; break-after: page; }
+      .page-container { box-shadow: none !important; border: 2px solid #000 !important; }
+    }
+  </style>
+</head>
+<body class="theme-grade-7">
+
+  <!-- نافذة اختيار الصف التفاعلية -->
+  <div class="modal-overlay active" id="gradeModal">
+    <div class="grade-modal-card">
+      <h2>مدرسة ذات الصواري للتعليم الأساسي</h2>
+      <p>يرجى اختيار الصف المطلوب لبدء إدارة القوائم والدرجات:</p>
+      
+      <div class="grade-buttons-grid">
+        <button class="grade-btn-card btn-grade-7" onclick="selectGrade('7')">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>الصف السابع</span>
+        </button>
+
+        <button class="grade-btn-card btn-grade-8" onclick="selectGrade('8')">
+          <i class="fa-solid fa-book-open"></i>
+          <span>الصف الثامن</span>
+        </button>
+
+        <button class="grade-btn-card btn-grade-9" onclick="selectGrade('9')">
+          <i class="fa-solid fa-award"></i>
+          <span>الصف التاسع</span>
+        </button>
+      </div>
+
+      <div class="dev-modal-tag">
+        برمجة وتطوير: <span>المطور علي الصالح</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط التحكم العلوي -->
+  <div class="master-toolbar">
+    <button class="btn-switch-grade" onclick="openGradeModal()">
+      <i class="fa-solid fa-arrows-rotate"></i> <span id="currentGradeLabel">الصف السابع</span>
+    </button>
+
+    <div class="dev-top-pill">
+      <i class="fa-solid fa-code"></i> المطور علي الصالح
+    </div>
+
+    <div class="search-box">
+      <label for="searchInput"><i class="fa-solid fa-magnifying-glass"></i></label>
+      <input type="text" id="searchInput" placeholder="بحث عن طالب..." oninput="searchStudents(this.value)">
+    </div>
+
+    <div class="font-selector-box">
+      <label for="fontSelect"><i class="fa-solid fa-font"></i></label>
+      <select id="fontSelect" onchange="changeWebsiteFont(this.value)">
+        <option value="'Cairo', sans-serif">خط كوفيك (Cairo)</option>
+        <option value="'Segoe UI', Tahoma, sans-serif">الخط الافتراضي</option>
+        <option value="'Tajawal', sans-serif">خط تجوال</option>
+        <option value="'Almarai', sans-serif">خط المراعي</option>
+        <option value="'Alexandria', sans-serif">خط الإسكندرية</option>
+        <option value="'Readex Pro', sans-serif">خط ريديكس</option>
+        <option value="'Amiri', serif">الخط الأميري</option>
+      </select>
+    </div>
+
+    <button class="btn btn-all-pdf" onclick="downloadModifiedPagesAsPDF()">
+      <i class="fa-solid fa-file-pdf"></i> تصدير PDF
+    </button>
+  </div>
+
+  <!-- حاوية العرض المتجاوبة -->
+  <div class="mobile-scale-wrapper">
+    <div id="pages-root" style="display: flex; flex-direction: column; gap: 30px;"></div>
+  </div>
+
+  <!-- شريط الإجراءات السفلي -->
+  <div class="bottom-controls">
+    <button class="btn btn-add-page" onclick="addNewPage()">
+      <i class="fa-solid fa-plus-circle"></i> إضافة شعبة جديدة
+    </button>
+    <button class="btn btn-reset-all" onclick="resetAllToOriginal()">
+      <i class="fa-solid fa-rotate-left"></i> إعادة ضبط البيانات
+    </button>
+  </div>
+
+  <!-- الأزرار العائمة -->
+  <div class="floating-buttons-wrapper">
+    <button type="button" class="floating-btn floating-word" onclick="exportToWordDocx()" title="حفظ كملف وورد">
+      <i class="fa-solid fa-file-word"></i>
+    </button>
+
+    <a href="https://wa.me/963949174057" target="_blank" class="floating-btn floating-whatsapp" title="تواصل واتساب مع المطور علي الصالح">
+      <i class="fa-brands fa-whatsapp"></i>
+    </a>
+  </div>
+
+  <script>
+    const ROWS_PER_COLUMN = 19;
+    const COLUMNS_PER_PAGE = 3;
+    let currentActiveGrade = '7';
+
+    // 1) بيانات الصف السابع
+    const grade7Data = [
+      { classVal: "السابع", sectionVal: "الأولى", students: ["إبراهيم أحمد دلة", "إبراهيم عبد العزيز بكور", "إبراهيم عبد الغني قصاب", "إبراهيم خالد أرملي", "إبراهيم طارق السقا", "إبراهيم عمر الشيخ", "أبي عدنان الناصر", "أحمد أكرم كشفة", "أحمد أياد الحويري", "أحمد بلال الشيخو", "أحمد جهاد قصاب", "أحمد حسين السعيد", "أحمد رياض الناصر", "أحمد رامز رستناوي", "أحمد سامي جناح", "أحمد سليم بكور", "أحمد سليم حسون", "أحمد سليم شنات", "أحمد عبد الله الضاهر", "أحمد عدنان الضحيك", "أحمد عدنان السراقبي", "أحمد غازي المعروف", "أحمد فراس المروان", "أحمد فراس مسحة", "أحمد فاروق بكور", "أحمد فجر اليوسف", "أحمد فؤاد المصري", "أحمد محمود خزاعي", "أحمد محمود ضحيك", "أحمد محمود الصالح", "أحمد محمود النحلاوي", "أحمد محمد الشعبان", "أحمد محمد الشيخ", "أحمد محمد قيسون", "أحمد منير صويص", "أحمد نادر بكور", "أحمد نادر المصري", "أحمد ناصر الراشد", "أحمد وائل المرعي", "أحمد أمين الضاهر", "أدهم حسين الشيخ خليل", "اسحق حسين طه", "إسلام محمد بلال بكور"] },
+      { classVal: "السابع", sectionVal: "الثانية", students: ["أسامة زيد حديد", "أسامة عادل حجل", "أسامة عبد الرحمن الصالح", "أسامة نادر جوخدار", "إسماعيل إبراهيم النجار", "إسماعيل خالد الدقة", "أمجد أحمد الناجي", "أكرم مصطفى المصري", "أمجد عبد المالك طحان", "أمجد موفق قشة", "أمجد عبد الحميد محيميد", "أمين فايز قصاب", "أمين كفاح النعسان", "أمين كفاح النعسان", "أمين مدين الخطيب", "إياد تيسير عبد اللطيف", "أياد طلال شنات", "إياد عماد حويري", "أيمن حسان الضاهر", "أيمن عزيز المولس", "أيهم حسام الناصر", "أيوب عبد الناصر الأشقر", "باسل أيمن المرعي", "براء باسل الأيوبي", "براء محمد الجمعة", "براء محمد الخطيب", "بسام محمود النبهان", "بكر رسول الصعيك", "بلال جلال النكور", "بلال أحمد درويش", "بلال محمد قيسون", "تمام محمد قدور", "تميم محمد عتون", "تميم مصطفى مصطفى", "توفيق سليمان الرسو", "ثائر مهند دياب", "جبرائيل حسان قدور", "جعفر محمد العويشة", "جعفر محمود العلي", "جعفر محمود الكفت", "جلال جهاد العزو", "جهاد محمد حدود", "جهاد زكريا أرملي"] },
+      { classVal: "السابع", sectionVal: "الثالثة", students: ["حازم جاسم المحمد", "حازم ريد النميري", "حازم عبد العزيز النميري", "حازم محمد العلوش", "حامد ميسر صويص", "حسام أحمد المرعي", "حسام محمد شحود", "حسام وسيم عرفان", "حسام ياسر الخطيب", "حسن محمد حديد", "حسين فواز الفكاري", "حسين محمد شنات", "حمزة إبراهيم النعسان", "حمزة بركات", "حمزة توفيق الناجي", "حمزة عبد الباسط الضحيك", "حمزة عبد الرحمن السيد", "حمزة عبد العليم المروان", "حمزة محمد بكور", "حمزة محمد قدور", "حمزة مرهف أباظة", "حمزة ممدوح قيسون", "حمادة حمزة الروكاري", "حمزة يوسف جاموس", "حذيفة عبد الوهاب الخطيب", "حذيفة سليم خشفة", "حمود سامر الدرنب", "خالد أحمد علوش", "خالد أحمد الضحيك", "خالد أحمد ميزاه نازي", "خالد فيصل يحيى", "خالد عبد المجيد جمعة", "خالد محمود العلوش", "خالد محمد عتون", "خالد مصطفى المحمد", "خليل إبراهيم بخشين", "دحام أحمد البلوش", "رامز محمود يزنب", "ربيع بسام الكفت", "رضوان طه النكور", "رواد محمد العروان", "زكريا علاء النجار", "زكريا فيصل طه", "زكريا محمد الدريعي", "زكريا خالد واكية", "زيد الحاج عيسى", "زيد خزاعل المرعي"] },
+      { classVal: "السابع", sectionVal: "الرابعة", students: ["زيد تايه بخشين", "زين عبد الكافي جمعة", "زين الدين أحمد النوادي", "زين يحيى صويص", "زين نضال حسون", "سامر أحمد شحود", "سامر تركي درنب", "سعد عبد المجيد خالد", "سفيان عزام الناجي", "سليم أحمد ميزاه نازي", "سليم عبد السلام الكناني", "سليم سامي المرعي", "سليم محمود المدور", "سليم خالد الغزو", "سليمان درنب", "سليمان عبد الرحمن حريتاني", "سليمان عبد الناصر قصاب", "سليمان بهنان الجمعة", "سليمان محمود قشة الأمير", "سليمان محمد خير الدولت", "سليمان خالد اليونس", "سليم عبد العزيز الريحاوي", "سرين زيد الدين الخطيب", "شحود إبراهيم أرملي", "صالح إبراهيم الشحود", "صالح عيسى الخطيب", "صالح محمد الحاير التركماني", "ضياء زياد علوش", "ضياء محمود ميزاه نازي", "ضياء وسام واكية", "طارق جهاد النعسان", "طارق محمد درويش", "طارق زكريا قيسون", "طلحة الوزير", "طه راسم الطه", "عامر أحمد جويري", "عامر صهيب الطالب", "عالم عبد الرحمن الضاهر الخطيب", "عبادة محمد طيب الضاهر الخطيب", "عبد الجبار يوسف الخالد", "عبد الحي عبد الوهاب الضاهر", "عبد الحي محمد خير الخطيب", "عبد الحميد عبد المنعم اليوسف", "عبد الحميد عصام النحلاوي", "عبد الحميد ماجد خليل", "عبد الحميد محمود النجار", "عبد الرحمن حسين السراقبي", "عبد الستار أحمد الباشان", "عبيدة عبد العليم عتون"] },
+      { classVal: "السابع", sectionVal: "الخامسة", students: ["عبد الحميد محمد المدور", "عبد الحميد عبد الواحد الناجي", "عبد الحكيم محمد طه", "عبد الرحمن حسن الخالد", "عبد الرحمن جمعة الخلف", "عبد الرحمن خالد العكلا", "عبد الرحمن عبد الهادي العلوش", "عبد الرحمن فادي العلي", "عبد الرحمن كمال قيسون", "عبد الرحمن مازن القدور", "عبد الرحمن محمد سليم الضحيك", "عبد الرحمن ثائر العزو", "عبد الرحمن ياسر الشحود", "عبد الرزاق أحمد الضحيك", "عبد الرحيم بكور", "عبد الرزاق عبد المحيد جمعة", "عبد الرزاق طريق طه", "عبد السلام عدي خشفة", "عبد السلام قشة الأمير", "عبد الصمد زياد الشيخ حمود", "عبد العزيز أسامة مرزة", "عبد العليم أحمد واكية", "عبد العليم فادي القاسم", "عبد الغني ممدوح صويص", "عبد الكريم أحمد الضحيك", "عبد الكريم سامر النعسان", "عبد الكريم محمد سعيد الضاهر", "عبد الكريم فوار طه", "عبد الكريم ياسر ديني", "عبد اللطيف أحمد أو لربو", "عبد اللطيف عمار قيسون", "عبد اللطيف ماجد النعسان", "عبد اللطيف عبد الهادي الصالح", "عبد الله عبد الرحمن الساطي", "عبد الملك عبد الله بكور", "عبد الملك خالد فاروط", "عبد المالك فادي شنات", "عبد المالك عبد المؤمن الضحيك", "عبد المهين عادل السعيد", "عبد المعين كفاح النحلاوي", "عبد المنعم جهاد سوبل", "عبد المنعم عدنان بكور", "عبد الناصر عبد الهادي الضحيك", "عبد الناصر واكية", "عبد الناصر طلال شنات", "عبيدة عبد العليم الضحيك", "علي محمد المجيميد"] },
+      { classVal: "السابع", sectionVal: "السادسة", students: ["عبد الله محمود الضحيك", "عبد الله بسام الخطيب", "عبد الله حمادة الناجي", "عبد الله زياد الضاهر", "عبد الله فيصل خشفة", "عبد الله محمد بحقة", "عبد الله محمود واكية", "عبد الله نبيل بكور", "عبد الله يحيى صويص", "عبد الله خالد العز الدين", "عبد الله علي حديد", "عبد الله محمد بكور", "عبد الهادي عبد السلام المرعي", "عبد الهادي حفيظ جمعة", "عبد الوهاب عبد الوهاب الهاشم", "عبد الكافي عبد الكافي الصالح", "عبدو عبد الرزاق الجمعة", "عبدو ياسر الصالح", "عدي أسامة العبيد", "عدي نضال شنات", "عدنان عبد الرحمن عويجان", "عدنان عماد بدوي", "عدنان حمود الناجي", "عدنان محمد الباشان", "عدنان محمد خير كيال", "عدنان محمد قدور", "عدنان شادي الطحان", "عدنان يحيى الحجواني", "عثمان عبد الرحمن قشة", "عز الدين عبد الكريم حاج أحمد العز الدين", "عز الدين محمد قيسون", "علام أحمد بكور", "علاء أحمد علوش", "علاء عبيدة الطحان", "علاء عبد العظيم العبيد", "علاء فواز بكور", "علاء يحيى الضحيك", "علي خالد السراقبي", "علي زكريا العلي", "علي علاء الدين الشيخ حمود", "علي ماهر المرعي", "عماد حمدو العقيدي", "عماد جهاد القدور", "عمار أشرف الخليل", "عمار خالد جمعة", "عمار نبيل بكور"] },
+      { classVal: "السابع", sectionVal: "السابعة", students: ["عمر إسماعيل الدقو", "عمر عبد الناصر ميزاه نازي", "عمر عدنان الفرعي", "عمر هشام بكور", "عمر مهيب العلوش", "عمر أحمد المخزوم", "عمرو بلال قدور", "عمرو محمد عويجان", "عمران مروان جمعة", "غازي محمد خضر الحيلاوي", "غيث أحمد الأحمد", "غيث ماهر عويجان", "فاروق جعفر يحيى", "فضل الله محمود بحقة", "فهد حسام شنات", "فرحان علي فنجان", "فيصل حمود المصري", "فؤاد مصطفى المصطفى", "قاسم رفعت خزاعي", "قاسم عمر الأيوبي", "قاسم يوسف الكاخي", "قتيبة عدنان المصري", "كمال الدين أحمد عتون", "ليث حازم الخليل", "ليث مهند صويص", "ليث أحمد القاسم", "لقمان عبد الكريم قيسون", "ماجد عمر بكور", "ماجد عبد الله الجوخدار", "مازن أحمد الضحيك", "مازن بسام العبيد", "ماهر أحمد الدرنب", "ماهر عبد الرحمن الضاهر", "ماهر طه ميزاه نازي", "ماهر أحمد المحمد", "مالك أياد الزوكاري", "مالك عارف الصويص", "مبارك محمد الضحيك", "مجد فادي الضحيك", "مجد فادي طه", "محسن محمد المرعي", "محمد أحمد جوخدار", "محمد أحمد حويري", "محمد أحمد قيسون", "محمد جهاد عبد العزيز بكور", "محمد يوسف طحان", "مصطفى محمد الجوخدار"] },
+      { classVal: "السابع", sectionVal: "الثامنة", students: ["محمد أحمد المحمد", "محمد أنس الدريعي", "محمد بلال الضحيك", "محمد بلال قصي مروان", "محمد توفيق سليمان الرسو", "محمد حسان بكور", "محمد حسان قدور", "محمد حسن الشيخ", "محمد حسام عرفان", "محمد خير بشار بربور", "محمد خالد العلوش", "محمد خالد عتون", "محمد ربيع عبد الستار الناجي", "محمد رسلان جمعة", "محمد زين حسن النعسان", "محمد سامي الخاروف", "محمد سليمان عبد الرزاق الدقة", "محمد سليمان عدور", "محمد سليم ديب بيلباوي", "محمد سليم الشيخ", "محمد عبد الباسط المحمد", "محمد عبد الحميد اليونس", "محمد عبد الحكيم العلي", "محمد عبد السلام جمعة", "محمد عبد العزيز العلوش", "محمد عبد المعين الضاهر", "محمد عبد المعين المرعي", "محمد عبد المجيد الضاهر", "محمد عبد الله شنات", "محمد عدنان كيال", "محمد عدنان الطحان", "محمد علي مروان الضاهر", "محمد علاء أباظة", "محمد علاء جاموس", "محمد ماجد بكور", "محمد ماجد الرسو", "محمد محمود جمعة", "محمد محمود طه", "محمد محمود عويجان", "محمد مزيد الخطيب", "محمد أحمد الضاهر الخطيب", "محمد عمر عبد القادر", "محمد طلال قدور", "محمد أحمد شنات", "محمد فائق أحمد الشيخ", "محمد أيمن كيال", "محمد خالد العلي"] },
+      { classVal: "السابع", sectionVal: "التاسعة", students: ["محمد سليمان الخطيب", "محمد مختار جهاد الأشقر", "محمد نادر جوخدار", "محمد نضال أنس الضاهر", "محمد نور بشار علوش", "محمد نور سليمان عبد القادر", "محمد نور عبد الحليم الشيخ", "محمد نور وائل الشيخ", "محمد نور يونس الخطيب", "محمد هيثم أرملي", "محمد هائل حديد", "محمد وائل قشة", "محمد ياسر النعسان", "محمد عبد الباسط المحمد", "محمد عبد الباسط المرعي", "محمود أحمد جمعة", "محمود اياد الخطيب", "محمود حمدو الأشقر", "محمود حمزة قجة", "محمود سليمان بكور", "محمود طه المرعي", "محمود عدنان الطحان", "محمود عبد الكافي الصالح", "محمود محمد صويص", "محمود محمد عبد القادر", "محمود موسى بجقة", "محمود ناصر الراجح", "محمود ناصر علوش", "محي الدين عامر النحلاوي", "مدين أيمن صويص", "مدين زيد حديد", "مرهف منهل الخطيب", "مروان فيصل الأحمد", "مروان محمود الدالي الأحمد", "مصطفى بشار كريم", "مصطفى محمد سعيد الرسم", "معاذ أكرم الحاج عيسى", "معاوية نزار خزاعي", "معتصم أحمد الناجي", "معتصم بالله محمود المدور", "منير عدنان شنات", "منذر خالد الخالد", "مهند لؤي السويد", "موسى زياد الخطيب", "مؤيد سليم الضحيك", "مؤيد ماجد صويص"] },
+      { classVal: "السابع", sectionVal: "العاشرة", students: ["نادر ماهر الضميري", "ناصر عبد السلام بكور", "نبيل أحمد الشمالي", "ناصر خالد القدور", "نصر فايز الدويري", "نضال عبد الرحمن الضحيك", "نضال عبد الكريم حديد", "نهاد وليد معيشي", "هاشم محمد أمين صويص", "هزاع أيمن الضاهر", "هيثم محمد أياد الناجي", "وليد بسام النبهان", "وسام أحمد الرستناوي", "وسام تيسير غنام", "يامن أحمد الدرنب", "يامن خالد الأشقر", "يامن ماجد عدرة", "يامن عبد الحميد علوش", "يامن حسان الرحال", "يمان أحمد منهل العلي", "يمان محمد حمشو", "يحيى أحمد طه", "يحيى أمين النعسان", "يحيى زكريا خشفة", "يحيى طاهر النعسان", "يحيى محمد الضاهر", "يحيى يوسف الجاموس", "يزن حسان المرعي", "يزن عبد الحكيم رستناوي", "يزن عبد الاله العكلا", "يزن محمود الدقة", "يزن المصري", "يوسف إبراهيم بخشين", "يوسف خضر السيد", "يوسف عدنان عبد القادر", "يوسف عدنان صويص", "يوسف عبد الرزاق الرضوان", "يوسف محمد المحيميد", "يوسف محمد النحلاوي", "يوسف عمر العزو", "يونس زكريا بكور", "يونس محمد بسام جاموس", "يعقوب جهاد الضاهر", "يعقوب محمد بسام الزعبي"] }
+    ];
+
+    // 2) بيانات الصف الثامن مع تمييز المتسربين
+    const grade8Data = [
+      {
+        classVal: "الثامن", sectionVal: "الأولى",
+        students: [
+          "ابراهيم يوسف النحلاوي", "احسان فراس العلوي", "احسان كفاح عتون", "أحمد بسام میزاه نازی", "أحمد باسل الناجي", "أحمد فواز الخطيب", "أحمد عبد الله عويجان", "أحمد عصام الجمعة", "أحمد بسام رستناوي", "أحمد منذر شنات", "أحمد سمير الصالح", "أحمد راسم خزاعي", "أحمد محمد جوخدار", "احمد خالد الدرنب", "احمد عبد المهيم الضحيك", "أسامة يوسف جمعة", "أسامة عبد المعين جمعة", "أسامة محمد الفارس", "أسامة أحمد العموري",
+          "أسعد عدنان خشفة", "الياس محمود العلى الطعيمية", "أمير أحمد صويص", "أمين إبراهيم النجار", "أنس عبد الحكيم الجمعة", "أنور أحمد الحسين", "أيمن عثمان الضاهر", "أيهم علاء الدين الطحان", "أيهم مصطفى قيسون", "أيوب أحمد الخالد", "براء خالد الحاج قاسم", "بسام یوسف کیال", "بلال ابراهیم بکور", "بلال عبد المعين مروان", "تامر عماد الدين الشحود", "جمال محمد الشعبان", "جلال شریف خزاعی", "حازم تامر الجمعة", "حمزة محمد أمين الأشقر",
+          "حمزة نادر صويص", "حمزة عادل الشيخ حمود", "حمزة عبد الله الدرنب", "حمزة عبد الرزاق قدور",
+          { name: "أحمد محمد قدور", dropout: true },
+          { name: "أحمد عبد المعين صويص", dropout: true },
+          { name: "أمين طارق جمعة الحديد", dropout: true },
+          { name: "تامر محمد بكور", dropout: true },
+          { name: "خالد إبراهيم المرعي", dropout: true },
+          { name: "زكريا محمد سعيد الناجي", dropout: true },
+          { name: "زهير إياد النجار", dropout: true },
+          { name: "زهير يحيى الضحيك", dropout: true },
+          { name: "زياد أحمد واكية", dropout: true },
+          { name: "زيد عامر الضميري", dropout: true }
+        ]
+      },
+      {
+        classVal: "الثامن", sectionVal: "الثانية",
+        students: [
+          "حازم حذيفة واكية", "حمزة عمار تركماني", "حمزة إبراهيم أرملي", "حيدرة كمال القدور", "جلال أحمد الصالح", "خالد محمد عبد القادر", "خالد عبد المجيد بكور", "خالد سمير النجار", "خالد زكريا أرملي", "رامي محمد الرسو", "ربيع أيمن كيلاني", "زياد توفيق بكور", "زيد عبد الهادي عتون", "سالم محمود حيلاوي", "سامر محمد الحديد", "سعد الدين أحمد الباشا", "سليمان محمد الدبل", "سليم محمد الشيخ", "سليم طارق فياض",
+          "سليم زياد الخطيب", "شحود محمد العلوش", "صالح إبراهيم صوفان", "ضياء الحق علاء الدين ميزنازي", "طلال محمد المصطفى", "عامر بسام العلوش", "عامر محمد العموري", "عاصم محمد العلوش", "عبادة إياد جاموس", "عبيدة عبد العظيم العلوش", "عبيدة حامد صويص", "عبيدة محمد حمزة", "عبد الباسط محمود الضحيك", "عبد الباسط عبد السلام الضاهر الخطيب", "عبد الجواد راكان النعسان", "عدي أحمد الخطيب", "عبد الحكيم سليمان الدقة", "عبد الحميد يحيى والي", "عبد الحي أسامة الشمالي",
+          "عبد الدايم عبد الله قيسون",
+          { name: "سليمان ناصر جوخدار", dropout: true },
+          { name: "شادي محمد تعومي", dropout: true },
+          { name: "شامان فايز قورلي", dropout: true },
+          { name: "عبد الباري عبد اللطيف الضحيك", dropout: true },
+          { name: "عبد الجليل عبد السلام الشيخ", dropout: true },
+          { name: "عبد الحكيم أنس سراقبي", dropout: true },
+          { name: "عبد الحليم ماجد قحة", dropout: true },
+          { name: "عبد الحميد عبد الكريم الباشا", dropout: true },
+          { name: "عبد الحميد خالد العموري", dropout: true },
+          { name: "عبد الحي عرابي عرابي", dropout: true }
+        ]
+      },
+      {
+        classVal: "الثامن", sectionVal: "الثالثة",
+        students: [
+          "عبد الحميد خالد شنات", "عبد الرحمن عزام الصالح", "عبد الرحمن محمود أرملي", "عبد الرحمن أحمد شحود", "عبد الرحمن عمر الضحيك", "عبد الرحمن طلال زوكاري", "عبد الرحمن معتصم السعيد", "عبد الرحمن عبد الرزاق شنات", "عبد الرحمن طلال الصالح", "عبد الرحمن محمد الحديد", "عبد الرحمن عبد الحميد زكور", "عبد الرحمن مصطفى مصطفى", "عبد الرزاق أحمد خشفة", "عبد الرزاق محمد كريم", "عبد السلام احمد خشفة", "عبد الغني محمد الشيخ", "عبد القادر أنور عبد القادر", "عبد الكريم عبد الباسط حويري", "عبد الله حمادة خشفة",
+          "عبد اللطيف أحمد الضحيك", "عبد المؤمن أحمد عوجان", "عبد الوهاب محمد ضحيك", "عبد الوهاب أحمد الضاهر الخطيب", "عبد الواحد حمادة الناجي", "عدنان عبد الكريم محيميد", "عدنان باسم الحيلاوي", "علي سعيد بجقة", "علي جمال طه", "علي أحمد العلي", "علي موسى الحديد", "عمار محمد الرسو", "عمر عبد اللطيف الصالح", "عمر نضال الزوكاري", "غانم أحمد الأحمد",
+          { name: "عبد الحي هيثم الضحيك", dropout: true },
+          { name: "عبد الخالق إبراهيم قيسون", dropout: true },
+          { name: "عبد الخالق نضال قيسون", dropout: true },
+          { name: "عبد الرحمن محمد توفيق القدور", dropout: true },
+          { name: "عبد الرحمن مظهر بركات", dropout: true },
+          { name: "عبد الرحمن خالد شنات", dropout: true },
+          { name: "عبد الرحمن خالد كيال", dropout: true },
+          { name: "عبد الرزاق إبراهيم الدرويش", dropout: true },
+          { name: "عبد الرزاق ياسر بكور", dropout: true },
+          { name: "عبد الله يوسف الدقة", dropout: true },
+          { name: "عبد الحكيم محمد الخطيب", dropout: true }
+        ]
+      },
+      {
+        classVal: "الثامن", sectionVal: "الرابعة",
+        students: [
+          "عمر توفيق بكور", "عمر علاء الدين حمشو", "عمر جهاد الأشقر", "عمر خالد الأشقر", "عمر هشام بكور", "عمر محمد الجمعة", "عمر عماد الدين الجمعة", "عمار ياسر النعسان", "عماد طارق الدقة", "عبد الرحمن أيمن العويشي", "علي هاشم الناصر", "غياث خضر السيد", "غيث بسام جناح", "غيث سعيد خشفة", "فرج عمار حريتاني", "فهد محمد حمشو", "فواز جمعة الخلف", "فيصل سليم حسون", "فيصل امين حسون",
+          "قاسم مصطفى حديد", "ماجد مأمون الدرنب", "ماجد خزاعي خزاعي", "مازن أحمد الضحيك", "مالك أنس مدور", "مجد طارق طه", "مجد الدين محمد صوفان", "مجد مالك حدود", "محسن عامر اليونس", "محسن نضال عرابي", "محمد خير أحمد عبد القادر", "محمد أحمد الباشان", "محمد نور عبد الحفيظ الكاخي", "محمد زكريا خشفة", "محمد أيمن حديد", "محمد عبد الباسط الباشا", "محمد عبد الحكيم قجة", "محمد أحمد الشيخ", "محمد الزعيم أيمن الضاهر الخطيب",
+          "محمد نور رامي طه", "ماجد محمد جمعة الحسين",
+          { name: "علاء الدين محمد الضحيك", dropout: true },
+          { name: "عمر ابراهيم المصري", dropout: true },
+          { name: "عمر محمد العلي الطعيمية", dropout: true },
+          { name: "عهد أيمن العبيد", dropout: true },
+          { name: "عهد حمدو الأشقر", dropout: true },
+          { name: "غسان نضال الغازي", dropout: true },
+          { name: "فهد حسن الناجي", dropout: true },
+          { name: "فيصل يوسف طه", dropout: true },
+          { name: "كفاح حازم العلي", dropout: true },
+          { name: "ماهر مصطفى أرملي", dropout: true },
+          { name: "مجد فادي القاسم", dropout: true }
+        ]
+      },
+      {
+        classVal: "الثامن", sectionVal: "الخامسة",
+        students: [
+          "محمد محمود طه", "محمد مصطفى السيد", "محمد عمر المصري", "محمد عمار اليونس", "محمد علاء رحال", "محمد عبد الله الناصر", "محمد عبد اللطيف قيسون", "محمد علي مهند حمزة", "محمد علي عبدو الصالح", "محمد قتيبة الشيخ ضاهر", "محمد عماد الإبراهيم", "محمد محمود ميزنازي", "محمد محمود الضحيك", "محمد محمد علي الصالح", "محمد أحمد الدرنب", "محمد أيمن جمعة", "محمد ماجد عتون", "محمد عبد الرزاق ديب", "محمد زكريا ميزنازي",
+          "محمد عثمان عمر عتون", "محمد محمود الشمالي", "محمد عبد الحميد صويص", "محمد بلال شيخو", "محمد خالد بربور", "محمد إبراهيم بخشين", "محمد نور خالد قدور", "محمد عامر اليونس", "محمد أيهم المطلق", "محمد نور عبد الرزاق الزبط", "محمود أحمد بجقة", "محمود ماهر خطاب", "محمود محمد الضحيك", "محمود أسامة العمر", "محمود محمد الضحيك / الام اسماء", "محمود أحمد ميزنازي", "محمود بسام عرابي", "محمود أيمن ضحيك", "محمود غسان الضحيك",
+          "معاذ إسماعيل الشيخ", "معتز زكريا واكية", "مجد محمد وجود",
+          { name: "محمد إياد الضاهر الخطيب", dropout: true },
+          { name: "محمد عبد الرحمن حريتاني", dropout: true },
+          { name: "محمد نور منذر قيسون", dropout: true },
+          { name: "محمد فؤاد الضاهر", dropout: true },
+          { name: "محمد عدنان خشفة", dropout: true },
+          { name: "محمد عمر الدقة", dropout: true },
+          { name: "محمد عبد العظيم الضاهر الخطيب", dropout: true },
+          { name: "محمد ضياء عويجان", dropout: true },
+          { name: "محمد عبد الله النجار", dropout: true }
+        ]
+      },
+      {
+        classVal: "الثامن", sectionVal: "السادسة",
+        students: [
+          "عبد القادر مرتضى الشيخ خليل", "ماجد محمد جمعة الحسين", "محمود أنس كيال", "محمود أحمد الحيلاوي", "مصطفى درويش الدرويش", "مصطفى ماهر أباظة", "معاذ أحمد أرملي", "معاوية أحمد صويص", "منير محمود الحديد", "مهند زياد السعيد", "محمد نور زياد السعيد", "ميسرة نصرو الشيخ", "نزار حسام جوخدار", "نبيل عمار الدريعي", "نزيه عمر المدور", "نصر مرتضى الشيخ خليل", "هيثم أحمد مخزوم", "وسام محمود الناجي", "ياسين هشام الخطيب",
+          "يا من زايد جمعة جديد", "يحيى محمد اليونس", "يحيى عمر الحديد", "يحيى عماد اليحيى", "يحيى زكريا عوجان", "يحيى أحمد المحيميد", "يعرب عبد الكافي النعسان", "يزن مصطفى كيال", "يزن أيمن جمعة الحديد", "يزيد عمر يحيى", "يزيد أحمد صويص", "يوسف تركي كيال", "يوسف بشار كريم", "يوسف هائل الضاهر", "يوسف محمود قيسون", "يوسف طارق النعسان", "يونس سامي العلي", "يونس سامي الخاروف", "عمر أحمد صويص",
+          { name: "محمود أيمن بكور", dropout: true },
+          { name: ". معتز أحمد الضحيك", dropout: true },
+          { name: "مهند يوسف الرفاعي", dropout: true },
+          { name: "نعسان إبراهيم أتوزبير", dropout: true },
+          { name: "يا من إبراهيم الدريعي", dropout: true },
+          { name: "يحيى زكريا العقيدي", dropout: true },
+          { name: "يحيى زكريا خشفة", dropout: true },
+          { name: "يحيى طه الأحمد", dropout: true },
+          { name: "يوسف مروان صويص", dropout: true },
+          { name: "يوسف محمد حريتاني", dropout: true },
+          { name: "يوسف عبد الرزاق عرابي", dropout: true }
+        ]
+      }
+    ];
+
+    // 3) بيانات الصف التاسع
+    const grade9Data = [
+      {
+        classVal: "التاسع", sectionVal: "الأولى",
+        students: [
+          "إبراهيم أحمد عويجان", "إبراهيم إسماعيل النجار", "إبراهيم محمد الوالي", "إبراهيم محمود طحان", "أحمد أيمن المرعي", "أحمد تيسير غنام", "أحمد جمال طه", "أحمد حسام الناصر", "أحمد حسان حمو", "أحمد حسن بكور", "أحمد حسين عبد القادر", "أحمد توفيق واكية", "أحمد خالد قدور", "أحمد خالد واكية", "أحمد زياد مفلح", "أحمد شحود العلوش", "أحمد عبد السلام حمشو", "أحمد عبد العظيم العلوش", "أحمد عبد القادر المروان",
+          "أحمد عبد المجيد العلوش", "أحمد عدنان عبد القادر", "أحمد عماد العكلا", "أحمد فهمي الحديد", "أحمد فيصل يحيى", "أحمد كمال قيسون", "أحمد مازن عبد القادر", "أحمد ماهر أباظة", "أحمد محمد الرضوان", "أحمد محمد طحان", "أحمد محمود المخزوم", "أحمد مروان مروان", "أحمد مصطفى صوفان", "أحمد ممدوح الناجي", "أحمد هشام الضاهر", "أحمد همام الزوكاري", "أحمد وليد المحمد", "أديب جهاد السيد", "أسامة سليمان المروان",
+          "أسامة عبد الدايم المصري", "أسامة عدنان قشة الأمير", "أسامة عيسى حديد", "أسامة محمد العلي", "أسامة محمد النجار", "إسماعيل محمد أمين شنات", "أكرم عبد الطيف عبد القادر", "البراء باسل الخطيب", "المثنى عبد الباسط الجمعة الحديد", "المعتصم بالله محمد الشيخ", "أمجد سليمان الخطيب", "أمير غسان الخطيب"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "الثانية",
+        students: [
+          "أمين أحمد الشمالي", "أنس محمد حمزة", "أيمن خالد العوض", "أيمن علاء الخطيب", "أيهم حسام الإبراهيم", "أيهم عادل حجل", "باسل محمد أياد الناجي", "باسل محمد قسوات", "بسام غسان صويص", "بسام محمد قدور", "بلال خالد جاويش", "بلال عبد الحميد حشاش", "بلال عمار خزاعي", "بلال عيسى حديد", "بلال محمد عويجان", "بهاء الدين محمد المصري", "تركي عبدو كيال", "جبريل قاسم العبيد", "جعفر أحمد ميزه نازي",
+          "جعفر يوسف الكاخي", "جلال الدين أحمد عرابي", "جهاد زكريا الضاهر", "جهاد محمد المصطفى", "حاتم محمد جاويش", "حذيفة سليمان الباشا", "حذيفة محمد المريجاوي", "حسن عبد اللطيف العيسى", "حسن مصطفى قيسون", "حسين موسى الحسين", "حمزة محمود الصويص", "حمزة أحمد العقيدي", "حمزة أياد الصالح", "حمزة تامر الجمعة", "حمزة جميل الضحيك", "حمزة خالد الدقة", "حمزة خالد خشفة", "حمزة عبد المعين الضحيك", "حمزة عبد الجليل عيسى",
+          "حمزة عدنان الصالح", "حمزة علاء الدين العبيد", "حمزة غازي عجي اوغلان", "حمزة محمد العبيد", "حمزة محمد بكور", "حمزة مصطفى حسون", "حمزة يوسف جمعة الحديد", "حمزة يوسف قيسون", "حيان خضير سراقبي", "حيان سليمان الطحان", "خالد توفيق الجمعة", "خالد طلال شنات", "خالد عماد العموري", "عبد الهادي أحمد ميزه نازي"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "الثالثة",
+        students: [
+          "خالد فادي علوش", "خالد محمد العلوش", "خالد محمد بسام السعيد", "خالد محمد رامي السويد", "خالد نور الدين بكور", "دريد عبد الله بكور", "دياب محمود حريتاني", "رامي محمد النعسان", "ربيع رائد العلوش", "رأفت فراس المروان", "زكريا إبراهيم الضحيك", "زكريا سليمان المرعي", "زكريا يحيى قيسون", "سعيد طارق عبد القادر", "سليمان أحمد الشريف", "سليمان أحمد الشيخ", "سليمان محمد الخطيب", "سليمان ممدوح الناجي", "شادي ماهر الضاهر",
+          "شادي توفيق بكور", "شاكر أحمد الأمير", "شاكر محمود الدرنب", "صالح محمد كيال", "صفوان علاء أباظة", "ضياء الدين درويش الدرويش", "طارق مبارك السراقبي", "طارق محمد أمين طحان", "طالب عبد العزيز بكور", "طاهر خالد الخالد", "طاهر محمود الصالح", "طلال أحمد الدرويش", "عبد الباسط مازن حدود", "عبد الحكيم محمد عويجان", "عبد الحكيم وائل العلي", "عبد الحميد ياسر عبودي", "عبد الحليم أحمد علوش", "عبد الحنان عمر قيسون", "عبد الحي محمد ضحيك",
+          "عبد الحي ياسر كيال", "عبد الرحمن أحمد المحمد", "عبد الرحمن أحمد المرعي", "عبد الرحمن شحود علوش", "عبد الرحمن عبد الكريم الخطيب", "عبد الرحمن عمر الضاهر", "عبد الرحمن عمر بكور", "عبد الرحمن محمد حديد", "عبد الرحمن مدين العموري", "عبد الرحمن هاشم الناصر", "عبد الرحمن شجاع الجنيدي", "عبد الرزاق مصطفى حديد", "عبد الرحيم محمود العلوش"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "الرابعة",
+        students: [
+          "عبد السلام تيسير درويش", "عبد السلام مروان عويجان", "عبد السلام ماجد قدور", "عبد العزيز إياد جوخدار", "عبد العزيز عبد القادر الناصر", "عبد العليم كفاح خضر الحيلاوي", "عبد القادر أحمد الباشان", "عبد الكافي عبد العليم قيسون", "عبد الكريم طلال التركماني", "عبد الكريم عدنان قدور", "عبد الكريم عمار بجقة", "عبد الكريم محمد الخطيب", "عبد الكريم محمد عزام السعيد", "عبد اللطيف أبو سمرة", "عبد اللطيف عبد السلام الباشا", "عبد الله خالد قيسون", "عبد الله غسان الحسين", "عبد الله فايز قورلي", "عبد الله هشام تعومي",
+          "عبد الله الشيخ خليل", "عبد الله وليد المحمد", "عبد المالك زكريا والي", "عبد المالك عبد الباسط الباشا", "عبد المعطي يوسف عتون", "عبد المنعم بشار علوش", "عبد الناصر محمد الجمعة", "عبد الناصر محمد واكية", "عبد النور ستار جاووش", "عبد الهادي أحمد خطاب", "عباس عبد الكافي الضاهر", "عبيدة أحمد الحمشو", "عبيدة حسام الشيخ", "عبد الرحمن حسام الشيخ", "عبيدة عبد الحميد الناجي", "عبيدة محمد الناجي", "عبيدة هشام بربور", "عثمان مأمون صويص", "عدنان أسامة الضحيك",
+          "عدنان عامر الضاهر الخطيب", "عدنان علاء الدين الشحود", "عدي سليمان العلي", "عدي سامر الحبش", "علاء الدين محمد الباشا", "ضياء الدين محمد الباشا", "علاء محمد القدور", "علي سليمان العلي", "علي شادي يحيى", "علي ظهير الضاهر", "علي لؤي السعيد", "علي محمد خير اليتيم", "عمار أيمن الشيخ حمود", "عمار راسم خزاعي", "عمار صدام خزاعي"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "الخامسة",
+        students: [
+          "عمار ماجد واكية", "عمار عبد الحليم عتون", "عمار عبد الهادي عبد القادر", "عمار عمر الصالح", "عماد محمد العلي", "عمر أحمد العكيدي", "عمران عبد الحميد الأشقر", "عمران عبد الرزاق الرحمون", "عمر بديع الداود", "عمر خالد الجمعة", "عمر طارق النعسان", "عمر عبد الله الدرنب", "عمر عبد القادر كريم", "عمر فادي الضحيك", "عمر فجر اليوسف", "عمر كمال قدور", "عمر محمد طه", "عمر محمد قيسون", "عمر محمود الحسين",
+          "عمر نادر صويص", "عمر عبد الرحمن المصري", "عمرو إبراهيم كاخي", "عمرو عمار قطاش", "عيسى عدنان الضحيك", "غسان علاء كنعان", "غيث تمام اليونس", "غيث عبد الناصر جوخدار", "غيث مصطفى مريجاوي", "غيث عبد الناصر ضحيك", "فاروق ثائر الحواري", "فجر مرعي الإبراهيم", "فهد مهند علوش", "فهمي سليمان الخطيب", "قصي عمر قيسون", "قيس أيمن حديد", "كنان عبد الكريم خشفة", "كنان محمود النحلاوي", "لؤي أحمد المصري",
+          "لؤي خالد إيش", "لؤي رامي العموري", "لؤي عبد السلام كنعان", "لؤي محمد الحاج عيسى", "لورانس خالد الهاشم", "ماجد منجد الدرنب", "مالك هاشم الهاشم", "مالك خالد الجمعة", "مبارك أحمد الحديد", "مجد ثائر الباشا", "مجد أحمد المرعي", "محمد أحمد الصالح", "محمد أحمد ضحيك", "محمد أسامة العمر", "محمد أيمن العكلا", "محمد أيمن حويري", "محمد بسام صويص", "محمد بلال الرحال", "محمد بدر الدين السيد"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "السادسة",
+        students: [
+          "محمد جابر عمر قيسون", "محمد جهاد خليل", "محمد حسان حمود الأشقر", "محمد خضر حمادة", "محمد خير محمود درويش", "محمد رياض حازم درويش", "محمد سعد يحيى", "محمد سليم احمد الضحيك", "محمد شحود بدوي", "محمد طارق السقا", "محمد طارق دير بعلباوي", "محمد عبد الحليم الضحيك", "محمد عبد الفتاح الصالح", "محمد عبد المتين الحاج عيسى", "محمد عبد المجيد الضحيك", "محمد عيد عبد المجيد صالح", "محمد عجاج طه", "محمد عدنان هاشم", "محمد عدنان واكية",
+          "محمد عصام الرسو", "محمد عصام بجقة", "محمد علي عبد الغني الضحيك", "محمد عمر السعيد", "محمد عيد عبد الحميد حشاش", "محمد غاصب الشيخ حمود", "محمد ليث حامد الحسون", "محمد محمود المخزوم", "محمد مصطفى الجاموس", "محمد معتز صويص", "محمد فادي طه", "محمد نور جهاد النعسان", "محمد نور خالد الخطيب", "محمد نور عبد السلام عتون", "محمد هشام بربور", "محمود أحمد بكور", "محمود أحمد قدور", "محمود أحمد يحيى", "محمود بشار الضحيك",
+          "محمود خالد العز الدين", "محمود خالد العلوش", "محمود رامي طه", "محمود طه الحسين", "محمود عبد التواب الجمعة", "محمود عبد القادر كاخي", "محمود عبد الكريم الخطيب", "محمود علي العلي", "مصطفى علي العلي", "محمود علي المحمد", "محمود محمد الأحمد", "محمود هشام الهاشم", "محمد هاني بكور", "مهاب ماهر النعسان", "زين الدين دعاس النعسان"
+        ]
+      },
+      {
+        classVal: "التاسع", sectionVal: "السابعة",
+        students: [
+          "محمد نور حسان الصالح", "محمود أسامة بكور", "مخلص معتصم عرابي", "مروان محمد المروان", "مصطفى أحمد صويص", "مصطفى محمد بكور", "مصطفى أحمد ضحيك", "مصطفى بلال الصالح", "مصطفى حسن بكور", "مصطفى عبدو دير بعلباوي", "مصطفى ماجد الناجي", "مصطفى محمد الخالد عدية", "مصطفى موسى الحسين", "مصعب أكرم المرعي", "معتز عدنان الضحيك", "معتز منير صويص", "منير صالح النعسان", "مؤيد رسلان الضحيك", "نور الدين محمد الناجي",
+          "نورس حازم المحمد", "همام جهاد العموري", "وسام حسان جوخدار", "وسام زهير السعيد", "وسام هشام الخطيب", "وسيم أسامة النحلاوي", "ورد محمد النعسان", "يا من أحمد بكور", "يا من عبد السلام الشمالي", "يا من عبد القادر الضاهر", "يا من عبد الكريم المصري", "يا من محمد المرعي", "يا من أحمد ضحيك", "يا من علي قره دامور", "يا من محمد العكيدي", "يحيى جمال العلي", "يحيى محمد مهدي النجار", "يزن زين الدين الخطيب", "يزن صفوان خزاعي",
+          "يزن فراس الدريعي", "يزن مصطفى الأشقر", "يزن مهند دياب", "يعقوب أحمد العويشي", "يعقوب أحمد فنجان", "يمان عبد الرزاق قجة", "يوسف محمد حمشو", "يوسف محمد شنات", "يوسف محمد الحديد", "يوسف عبد الوكيل مروان", "يوسف محمد مهدي النجار", "يوسف عمر قيسون"
+        ]
+      }
+    ];
+
+    function openGradeModal() {
+      document.getElementById('gradeModal').classList.add('active');
+    }
+
+    function selectGrade(grade) {
+      currentActiveGrade = grade;
+      document.body.className = `theme-grade-${grade}`;
+      
+      const label = document.getElementById('currentGradeLabel');
+      if (grade === '7') label.innerText = 'الصف السابع';
+      if (grade === '8') label.innerText = 'الصف الثامن';
+      if (grade === '9') label.innerText = 'الصف التاسع';
+
+      document.getElementById('gradeModal').classList.remove('active');
+      loadSavedPages();
+    }
+
+    const measureCanvas = document.createElement('canvas');
+    const measureCtx = measureCanvas.getContext('2d');
+    function getTextWidth(text, font) {
+      measureCtx.font = font;
+      return measureCtx.measureText(text).width;
+    }
+
+    function changeWebsiteFont(fontFamily) {
+      document.documentElement.style.setProperty('--active-font', fontFamily);
+      setTimeout(() => {
+        document.querySelectorAll('.student-name-input').forEach(adjustFontSize);
+      }, 50);
+    }
+
+    function adjustFontSize(input) {
+      if (!input || !input.classList.contains('student-name-input')) return;
+      const baseSize = 13.5; 
+      const minSize = 9.0;   
+      const text = input.value;
+      if (!text || text.trim() === '') {
+        input.style.fontSize = baseSize + 'px';
+        return;
+      }
+      const currentFont = getComputedStyle(document.documentElement).getPropertyValue('--active-font') || 'sans-serif';
+      const maxAllowedWidth = 185; 
+      const naturalWidth = getTextWidth(text, `600 ${baseSize}px ${currentFont}`);
+
+      if (naturalWidth <= maxAllowedWidth) {
+        input.style.fontSize = baseSize + 'px';
+        return;
+      }
+
+      let currentSize = baseSize;
+      while (currentSize > minSize) {
+        currentSize -= 0.5;
+        const width = getTextWidth(text, `600 ${currentSize}px ${currentFont}`);
+        if (width <= maxAllowedWidth) break;
+      }
+      input.style.fontSize = currentSize + 'px';
+    }
+
+    function saveStateToStorage() {
+      const wrappers = document.querySelectorAll('.page-wrapper');
+      const pagesData = [];
+      wrappers.forEach(wrap => {
+        const classVal = wrap.querySelector('.class-input')?.value || '';
+        const sectionVal = wrap.querySelector('.section-input')?.value || '';
+        const students = [];
+        wrap.querySelectorAll('.row-item').forEach(row => {
+          const input = row.querySelector('.student-name-input');
+          const isDrop = row.classList.contains('dropout-student');
+          students.push({
+            name: input ? input.value : '',
+            dropout: isDrop
+          });
+        });
+        pagesData.push({ classVal, sectionVal, students });
+      });
+      localStorage.setItem(`saved_grade_${currentActiveGrade}_vFINAL`, JSON.stringify(pagesData));
+    }
+
+    function searchStudents(query) {
+      const cleanQuery = query.trim().toLowerCase();
+      document.querySelectorAll('.row-item').forEach(item => {
+        item.classList.remove('search-match');
+        if (cleanQuery !== '') {
+          const input = item.querySelector('.student-name-input');
+          if (input && input.value.toLowerCase().includes(cleanQuery)) {
+            item.classList.add('search-match');
+          }
+        }
+      });
+    }
+
+    function createPageElement(pageNumber, initialData = null) {
+      const pageWrapper = document.createElement('div');
+      pageWrapper.className = 'page-wrapper';
+      pageWrapper.setAttribute('data-page-num', pageNumber);
+
+      pageWrapper.innerHTML = `
+        <div class="page-toolbar">
+          <span style="font-weight: bold; color: var(--theme-main); font-size: 14px;">
+            📌 ورقة الشعبة (${pageNumber})
+          </span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-page-png" onclick="captureAndDownloadPage(this)">
+              <i class="fa-solid fa-image"></i> حفظ PNG
+            </button>
+            <button class="btn btn-delete-page" onclick="deletePage(this)">
+              <i class="fa-solid fa-trash-can"></i> حذف
+            </button>
+          </div>
+        </div>
+      `;
+
+      const pageContainer = document.createElement('div');
+      pageContainer.className = 'page-container';
+
+      let columnsHtml = '';
+      let currentNumber = 1;
+
+      for (let c = 0; c < COLUMNS_PER_PAGE; c++) {
+        let rowsHtml = '';
+        for (let r = 0; r < ROWS_PER_COLUMN; r++) {
+          const indexInPage = currentNumber - 1;
+          const rawItem = initialData?.students?.[indexInPage];
+          
+          let studentVal = '';
+          let isDropout = false;
+
+          if (typeof rawItem === 'string') {
+            studentVal = rawItem;
+          } else if (rawItem && typeof rawItem === 'object') {
+            studentVal = rawItem.name || '';
+            isDropout = !!rawItem.dropout;
+          }
+
+          rowsHtml += `
+            <div class="row-item ${isDropout ? 'dropout-student' : ''}" title="${isDropout ? 'طالب متسرب' : ''}">
+              <div class="idx-box">
+                <input type="text" value="${currentNumber}" tabindex="-1" readonly>
+              </div>
+              <div class="name-box">
+                <input type="text" 
+                       class="student-name-input" 
+                       value="${escapeHtml(studentVal)}" 
+                       data-default-placeholder="اسم الطالب..."
+                       placeholder="اسم الطالب...">
+                <button type="button" class="btn-insert-row" title="إدراج خانة" tabindex="-1" onmousedown="insertEmptyRow(this, event)">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          currentNumber++;
+        }
+
+        columnsHtml += `
+          <div class="column-table">
+            <div class="col-header"><div>الرقم</div><div>اسم الطالب</div></div>
+            ${rowsHtml}
+          </div>
+        `;
+      }
+
+      const defaultClassName = currentActiveGrade === '7' ? 'السابع' : (currentActiveGrade === '8' ? 'الثامن' : 'التاسع');
+      const classValue = initialData?.classVal || defaultClassName;
+      const sectionValue = initialData?.sectionVal || '';
+
+      pageContainer.innerHTML = `
+        <div>
+          <div class="school-title">مدرسة ذات الصواري للتعليم الأساسي</div>
+          <div class="ornament"><div class="diamond-icon"></div></div>
+
+          <div class="top-header-bar">
+            <div class="header-box">
+              <label>الصف:</label>
+              <input type="text" class="class-input" value="${escapeHtml(classValue)}" data-default-placeholder="اكتب الصف هنا" placeholder="اكتب الصف هنا">
+            </div>
+            <div class="header-box">
+              <label>الشعبة:</label>
+              <input type="text" class="section-input" value="${escapeHtml(sectionValue)}" data-default-placeholder="اكتب الشعبة هنا" placeholder="اكتب الشعبة هنا">
+            </div>
+          </div>
+
+          <div class="tables-wrapper">
+            ${columnsHtml}
+          </div>
+        </div>
+
+        <div class="page-footer-container">
+          <div class="ornament" style="margin-top: 10px; width: 100%;"><div class="diamond-icon"></div></div>
+          <div class="book-page-number">- ${pageNumber} -</div>
+          <div class="dev-badge">
+            <i class="fa-solid fa-code"></i>
+            <span>المطور علي الصالح</span>
+          </div>
+        </div>
+      `;
+
+      pageWrapper.appendChild(pageContainer);
+      pageWrapper.querySelectorAll('.student-name-input').forEach(adjustFontSize);
+      return pageWrapper;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function insertEmptyRow(btnOrInput, e = null) {
+      if (e) e.preventDefault();
+      const pageWrapper = btnOrInput.closest('.page-wrapper');
+      const allRows = Array.from(pageWrapper.querySelectorAll('.row-item'));
+      const allInputs = Array.from(pageWrapper.querySelectorAll('.student-name-input'));
+      
+      let targetInput = btnOrInput.classList.contains('student-name-input') ? btnOrInput : btnOrInput.closest('.name-box').querySelector('.student-name-input');
+      const targetIdx = allInputs.indexOf(targetInput);
+      if (targetIdx === -1) return;
+
+      for (let i = allInputs.length - 1; i > targetIdx; i--) {
+        allInputs[i].value = allInputs[i - 1].value;
+        allRows[i].className = allRows[i - 1].className;
+        adjustFontSize(allInputs[i]);
+      }
+      
+      targetInput.value = '';
+      allRows[targetIdx].classList.remove('dropout-student');
+      adjustFontSize(targetInput);
+      targetInput.focus();
+      saveStateToStorage();
+    }
+
+    function removeEmptyInsertedRow(input) {
+      const pageWrapper = input.closest('.page-wrapper');
+      const allRows = Array.from(pageWrapper.querySelectorAll('.row-item'));
+      const allInputs = Array.from(pageWrapper.querySelectorAll('.student-name-input'));
+      const targetIdx = allInputs.indexOf(input);
+      if (targetIdx === -1) return false;
+
+      for (let i = targetIdx; i < allInputs.length - 1; i++) {
+        allInputs[i].value = allInputs[i + 1].value;
+        allRows[i].className = allRows[i + 1].className;
+        adjustFontSize(allInputs[i]);
+      }
+      allInputs[allInputs.length - 1].value = '';
+      allRows[allRows.length - 1].classList.remove('dropout-student');
+
+      if (targetIdx > 0) focusAtEnd(allInputs[targetIdx - 1]);
+      saveStateToStorage();
+      return true;
+    }
+
+    function focusAtEnd(input) {
+      input.focus();
+      const len = input.value.length;
+      input.setSelectionRange(len, len);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      const active = document.activeElement;
+      if (!active) return;
+
+      if (e.key === 'Enter') {
+        if (active.classList.contains('class-input')) {
+          e.preventDefault();
+          active.closest('.page-wrapper').querySelector('.section-input')?.focus();
+          return;
+        }
+        if (active.classList.contains('section-input')) {
+          e.preventDefault();
+          active.closest('.page-wrapper').querySelector('.student-name-input')?.focus();
+          return;
+        }
+        if (active.classList.contains('student-name-input')) {
+          e.preventDefault();
+          if (e.shiftKey || e.ctrlKey) { insertEmptyRow(active); return; }
+          const inputs = Array.from(active.closest('.page-wrapper').querySelectorAll('.student-name-input'));
+          const idx = inputs.indexOf(active);
+          if (idx !== -1 && idx + 1 < inputs.length) {
+            inputs[idx + 1].focus();
+            inputs[idx + 1].select();
+          }
+        }
+      }
+
+      if (e.key === 'Backspace') {
+        if (active.classList.contains('student-name-input')) {
+          if (active.value === '' && active.selectionStart === 0 && active.selectionEnd === 0) {
+            const wrapper = active.closest('.page-wrapper');
+            const inputs = Array.from(wrapper.querySelectorAll('.student-name-input'));
+            const idx = inputs.indexOf(active);
+
+            let hasTextBelow = false;
+            for (let i = idx + 1; i < inputs.length; i++) {
+              if (inputs[i].value.trim() !== '') { hasTextBelow = true; break; }
+            }
+            if (hasTextBelow) {
+              e.preventDefault();
+              removeEmptyInsertedRow(active);
+              return;
+            }
+
+            if (idx > 0) {
+              const prevInput = inputs[idx - 1];
+              if (prevInput.value.trim() !== '') {
+                e.preventDefault();
+                prevInput.value = prevInput.value.slice(0, -1);
+                adjustFontSize(prevInput);
+                focusAtEnd(prevInput);
+                saveStateToStorage();
+              } else {
+                e.preventDefault();
+              }
+            }
+          }
+        }
+      }
+    });
+
+    document.addEventListener('input', function(e) {
+      if (e.target.tagName === 'INPUT') {
+        if (e.target.classList.contains('student-name-input')) {
+          adjustFontSize(e.target);
+        }
+        saveStateToStorage();
+      }
+    });
+
+    function updateBookPageNumbers() {
+      document.querySelectorAll('.page-wrapper').forEach((wrap, index) => {
+        const pageNum = index + 1;
+        wrap.setAttribute('data-page-num', pageNum);
+        const numElem = wrap.querySelector('.book-page-number');
+        if (numElem) numElem.innerText = `- ${pageNum} -`;
+      });
+      saveStateToStorage();
+    }
+
+    function addNewPage(data = null) {
+      const root = document.getElementById('pages-root');
+      const currentCount = root.querySelectorAll('.page-wrapper').length;
+      const newPageWrapper = createPageElement(currentCount + 1, data);
+      root.appendChild(newPageWrapper);
+      saveStateToStorage();
+      if (!data) newPageWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function deletePage(btn) {
+      const wrappersCount = document.querySelectorAll('.page-wrapper').length;
+      if (wrappersCount <= 1) {
+        alert("لا يمكن حذف آخر شعبة متبقية!");
+        return;
+      }
+      if (confirm("هل أنت متأكد من حذف هذه الشعبة ببياناتها؟")) {
+        btn.closest('.page-wrapper').remove();
+        updateBookPageNumbers();
+      }
+    }
+
+    function resetAllToOriginal() {
+      if (confirm("هل أنت متأكد من استعادة بيانات الصف الأصلية؟")) {
+        localStorage.removeItem(`saved_grade_${currentActiveGrade}_vFINAL`);
+        loadSavedPages();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function loadSavedPages() {
+      const root = document.getElementById('pages-root');
+      root.innerHTML = '';
+      
+      const saved = localStorage.getItem(`saved_grade_${currentActiveGrade}_vFINAL`);
+      if (saved) {
+        try {
+          const pagesData = JSON.parse(saved);
+          if (Array.isArray(pagesData) && pagesData.length > 0) {
+            pagesData.forEach(pData => addNewPage(pData));
+            return;
+          }
+        } catch (e) {}
+      }
+
+      if (currentActiveGrade === '7') {
+        grade7Data.forEach(pData => addNewPage(pData));
+      } else if (currentActiveGrade === '8') {
+        grade8Data.forEach(pData => addNewPage(pData));
+      } else if (currentActiveGrade === '9') {
+        grade9Data.forEach(pData => addNewPage(pData));
+      }
+    }
+
+    function prepareForCapture(containerElement) {
+      containerElement.querySelectorAll('input').forEach(input => {
+        input.setAttribute('value', input.value);
+        input.placeholder = '';
+        if (input.classList.contains('student-name-input')) adjustFontSize(input);
+      });
+    }
+
+    function restoreAfterCapture(containerElement) {
+      containerElement.querySelectorAll('input').forEach(input => {
+        const defaultPh = input.getAttribute('data-default-placeholder');
+        if (defaultPh) input.placeholder = defaultPh;
+      });
+    }
+
+    function isPageModified(pageContainer) {
+      const studentInputs = pageContainer.querySelectorAll('.student-name-input');
+      for (let input of studentInputs) {
+        if (input.value.trim() !== '') return true;
+      }
+      return false;
+    }
+
+    // تصدير PNG بدون اقتصاص على شاشات الجوال
+    async function captureAndDownloadPage(btn) {
+      const pageWrapper = btn.closest('.page-wrapper');
+      const pageContainer = pageWrapper.querySelector('.page-container');
+      const pageNum = pageWrapper.getAttribute('data-page-num') || '1';
+
+      prepareForCapture(pageContainer);
+
+      try {
+        const canvas = await html2canvas(pageContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          windowWidth: 1200
+        });
+
+        const image = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = `قائمة_الطلاب_الصف_${currentActiveGrade}_شعبة_${pageNum}.png`;
+        link.href = image;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        alert("حدث خطأ أثناء حفظ الصورة.");
+      } finally {
+        restoreAfterCapture(pageContainer);
+      }
+    }
+
+    // تصدير PDF لكافة الشعب
+    async function downloadModifiedPagesAsPDF() {
+      const btn = document.querySelector('.master-toolbar .btn-all-pdf');
+      const allContainers = document.querySelectorAll('.page-container');
+      const modifiedList = [];
+      allContainers.forEach((container, idx) => {
+        if (isPageModified(container)) modifiedList.push({ index: idx + 1, container });
+      });
+
+      if (modifiedList.length === 0) {
+        alert("⚠️ لا توجد بيانات مسجلة لتصديرها!");
+        return;
+      }
+
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التصدير...`;
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      try {
+        for (let i = 0; i < modifiedList.length; i++) {
+          const item = modifiedList[i];
+          prepareForCapture(item.container);
+          const canvas = await html2canvas(item.container, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            windowWidth: 1200
+          });
+          restoreAfterCapture(item.container);
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          if (i > 0) pdf.addPage('a4', 'p');
+          pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+        }
+        pdf.save(`قوائم_الصف_${currentActiveGrade}_مدرسة_ذات_الصواري.pdf`);
+      } catch (error) {
+        alert("حدث خطأ أثناء التصدير.");
+      } finally {
+        btn.innerHTML = `<i class="fa-solid fa-file-pdf"></i> تصدير PDF`;
+      }
+    }
+
+    // تصدير Word الرسمي
+    function exportToWordDocx() {
+      const wrappers = document.querySelectorAll('.page-wrapper');
+      if (wrappers.length === 0) return;
+
+      let allPagesHtml = '';
+      wrappers.forEach((wrap, pageIdx) => {
+        const classVal = wrap.querySelector('.class-input')?.value || '';
+        const sectionVal = wrap.querySelector('.section-input')?.value || '';
+        const studentRowsList = Array.from(wrap.querySelectorAll('.row-item'));
+        
+        let studentRows = '';
+        let sIdx = 1;
+        studentRowsList.forEach((row) => {
+          const input = row.querySelector('.student-name-input');
+          const isDrop = row.classList.contains('dropout-student');
+          if (input && input.value && input.value.trim() !== '') {
+            studentRows += `
+              <tr style="height: 24px;">
+                <td style="border: 1px solid #000; text-align: center; font-weight: bold; width: 35px;">${sIdx++}</td>
+                <td style="border: 1px solid #000; text-align: right; padding-right: 6px; font-weight: 600; width: 220px;">
+                  ${escapeHtml(input.value.trim())} ${isDrop ? '<span style="color:red; font-size:10px;">(متسرب)</span>' : ''}
+                </td>
+                <td style="border: 1px solid #000; text-align: center; width: 55px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 55px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 55px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 65px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 85px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 55px;"></td>
+                <td style="border: 1px solid #000; text-align: center; width: 65px;"></td>
+              </tr>
+            `;
+          }
+        });
+
+        const pageBreakStyle = pageIdx > 0 ? 'page-break-before: always;' : '';
+        allPagesHtml += `
+          <div style="${pageBreakStyle} margin-bottom: 30px;">
+            <table style="width: 100%; border: none; margin-bottom: 12px; font-weight: bold; font-size: 14px; direction: rtl;">
+              <tr>
+                <td style="width: 33%; text-align: right;">مديرية التربية و التعليم في حمص<br>مدرسة : ذات الصواري ح2</td>
+                <td style="width: 34%; text-align: center;">المادة : ........................<br>الدرجة : ........................</td>
+                <td style="width: 33%; text-align: left;">الصف : ${escapeHtml(classVal)}<br>الشعبة: ${escapeHtml(sectionVal)}</td>
+              </tr>
+            </table>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; direction: rtl;" border="1">
+              <thead>
+                <tr style="background-color: #f2f2f2; font-weight: bold;">
+                  <th rowspan="3" style="border: 1px solid #000; width: 35px;">م</th>
+                  <th rowspan="3" style="border: 1px solid #000; width: 220px;">الاسم الثلاثي</th>
+                  <th style="border: 1px solid #000; width: 55px;">شفهي</th>
+                  <th style="border: 1px solid #000; width: 55px;">وظائف</th>
+                  <th style="border: 1px solid #000; width: 55px;">مذاكرة</th>
+                  <th style="border: 1px solid #000; width: 65px;">المجموع</th>
+                  <th style="border: 1px solid #000; width: 85px;">امتحان الفصل الأول</th>
+                  <th colspan="2" style="border: 1px solid #000; width: 120px;">محصلة فصل الأول</th>
+                </tr>
+                <tr style="background-color: #f2f2f2; font-weight: bold;">
+                  <th style="border: 1px solid #000;">25%</th>
+                  <th style="border: 1px solid #000;">25%</th>
+                  <th style="border: 1px solid #000;">50%</th>
+                  <th style="border: 1px solid #000;">100%</th>
+                  <th style="border: 1px solid #000;">100%</th>
+                  <th colspan="2" style="border: 1px solid #000;">100%</th>
+                </tr>
+                <tr style="background-color: #f2f2f2; font-weight: bold;">
+                  <th style="border: 1px solid #000;"></th>
+                  <th style="border: 1px solid #000;"></th>
+                  <th style="border: 1px solid #000;"></th>
+                  <th style="border: 1px solid #000;"></th>
+                  <th style="border: 1px solid #000;"></th>
+                  <th style="border: 1px solid #000;">رقماً</th>
+                  <th style="border: 1px solid #000;">كتابتاً</th>
+                </tr>
+              </thead>
+              <tbody>${studentRows}</tbody>
+            </table>
+          </div>
+        `;
+      });
+
+      const wordDocument = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>سجل درجات الطلاب</title>
+        <style>@page { size: A4 portrait; margin: 1cm; } body { font-family: 'Traditional Arabic', Arial; direction: rtl; }</style>
+        </head><body>
+          <div style="text-align: center; margin-bottom: 10px; font-size: 11px; color: #555;">تم التصدير بواسطة نظام مدرسة ذات الصواري - إعداد: المطور علي الصالح</div>
+          ${allPagesHtml}
+        </body></html>
+      `;
+
+      const blob = new Blob(['\ufeff', wordDocument], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `سجل_درجات_الصف_${currentActiveGrade}.doc`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    loadSavedPages();
+  </script>
+</body>
+</html>
